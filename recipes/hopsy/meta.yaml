@@ -1,0 +1,67 @@
+{% set name = "hopsy" %}
+{% set version = "1.7.0" %} # Update to your actual release version
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: <INSERT_SHA256_HASH_HERE> # Replace this after building the sdist!
+
+build:
+  number: 0
+  # Your pyproject.toml specifies requires-python = ">=3.10"
+  skip: true 
+  script:
+    # Pass CMake args to scikit-build-core so it finds the conda-forge Eigen
+    - export CMAKE_ARGS="-DUSE_SYSTEM_EIGEN=ON"  # [unix]
+    - set CMAKE_ARGS="-DUSE_SYSTEM_EIGEN=ON"     # [win]
+    - {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake
+    - ninja
+  
+  host:
+    - python
+    - pip
+    - scikit-build-core >=0.10
+    - setuptools_scm >=8
+    - pybind11
+    - eigen
+  
+  run:
+    - python
+    - polyround >=0.4.0
+    - optlang >=1.7.0
+    - arviz
+    - numpy
+    - pandas
+    - tqdm
+    - scipy
+    - scikit-learn
+    # Note: Gurobipy is in your 'extras', but it's commercial software 
+    # and not available on the main conda-forge channel. Users will need 
+    # to install it via the Gurobi channel manually if they need it.
+
+test:
+  imports:
+    - hopsy
+  requires:
+    - pip
+  commands:
+    - pip check
+    - unittest tests
+
+about:
+  home: https://jugit.fz-juelich.de/IBG-1/ModSim/hopsy
+  summary: "A python interface for hops, the highly optimized polytope sampling toolbox."
+  license: MIT
+  license_file: LICENSE
+
+extra:
+  recipe-maintainers:
+    - qacwnfq
